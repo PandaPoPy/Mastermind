@@ -1,0 +1,89 @@
+## Règles du jeu
+
+- 2 joueurs : l’un sera joué par l’ordinateur
+- l’ordinateur choisit 4 couleurs dans un certain ordre (et ne les montre pas au
+  joueur), le joueur humain doit les trouver
+- il existe 6 couleurs possibles (rouge, bleu, vert, jaune, orange, violet),
+  les doublons sont possibles dans une combinaison
+- but du jeu : trouver une combinaison de 4 couleurs (joueur humain)
+- le joueur propose une série ordonnée de 4 couleurs, l’ordinateur vérifie
+  ensuite pour chaque couleur, sans préciser de quel pion il s’agit :
+    - s’il y a une couleur au bon endroit, il place un pion rouge
+    - s’il y a une couleur au mauvais endroit, il place un pion blanc
+- il y a 10 tentatives possibles pour le joueur
+- lorsqu’il y a 4 pions rouges, le joueur gagne
+- dans le cas contraire, le joueur re-propose une autre combinaison
+- pendant ce temps, les anciennes combinaisons et leur résultat sont toujours
+  visibles
+- au bout des 10 essais, si le joueur n’a pas gagné, il a perdu, et l’ordinateur
+  lui montre la réponse
+- à la fin de la partie (peu importe l’issue), le joueur ne peut plus jouer, et
+  on lui propose de relancer une partie
+- c’est au joueur de demander la validation de sa ligne une fois qu’il a choisi
+  sa combinaison ; il peut donc modifier les pions placés
+- le plateau de jeu est une sorte de grille, de 11 lignes de 5 colonnes (4 pour
+  le choix de l’utilisateur, une pour les pions de la réponse (jusqu’à 4). En
+  haut du plateau se trouve une ligne correspondant au résultat, qui est cachée
+  pendant la durée du jeu.
+- le joueur remplit les lignes de proposition en commençant par le bas, puis en
+  remontant d’une ligne après validation
+- comment le joueur peut-il placer ses pions ? Il y a une « réserve » dans la
+  page, contenant les différents pions. En cliquant (ou en glissant) sur un
+  pion, on le place sur le plateau sur la ligne active.
+- si le joueur tente de valider une ligne incomplète, on ne valide pas.
+- il y a un bouton « valider » pour lancer la validation
+- un bouton permet d’afficher les règles du jeu (optionne)
+
+## Considérations techniques
+
+- le jeu en lui-même sera écrit en JS (avec jQuery), l’ordinateur sera
+  personnifié par PHP, avec lequel on communiquera par requêtes AJAX
+- comment PHP choisit une combinaison ?
+  - array_rand() permet de choisir une ou plusieurs valeurs aléatoires dans un
+    tableau
+- comment PHP mémorise la combinaison ?
+  - en utilisant une session (il sauvegarde la combinaison gagnante et le numéro
+    de la dernière proposition du joueur)
+- en JS, comment savoir quelle ligne est à remplir ?
+  - on commence à la ligne 1, puis après validation, on incrémente le numéro
+- comment se déroule une partie ?
+  - on crée le plateau de jeu
+  - on fait un appel à PHP pour initialiser le jeu (là, la solution sera générée
+    et sauvegardée en session)
+  - lors d’un clic sur un pion de la réserve, un pion de cette couleur est
+    ajouté sur le plateau, à la suite de la ligne courante, si celle-ci n’est
+    pas terminée
+    - comment savoir à quelle position placer un nouveau pion ?
+      - il faut enregistrer une variable d’état, gardant en mémoire le
+        remplissage de la ligne, et incrémenté à chaque nouveau pion
+  - lors de la validation (clic sur un bouton), on fait un appel à PHP, lui
+    indiquant les valeurs de la ligne, PHP fait la comparaison avec sa propre
+    combinaison, puis renvoie le nombre de pions rouges et blancs. Ensuite, JS
+    affiche les pions. En fonction de la réponse, on félicite le joueur (s’il a
+    gagné), ou on passe à la ligne suivante (sauf s’il est déjà sur la dernière
+    ligne), qu’on met en surbrillance
+    - comment PHP peut-il comparer la solution et la proposition ?
+      - 2 étapes :
+        1. pour chaque pion, on vérifie s’il est bien placé. Si c’est le cas, on
+           incrémente le score rouge, puis on le « désactive » : il ne sera plus
+           compté pour les autres
+           vérifications
+        2. ensuite, pour chaque pion restant, on vérifie s’il se trouve dans le
+           tableau d’en face (in_array()). Si c’est le cas, on incrémente le
+           score blanc, puis on le désactive.
+- si le joueur a gagné, on lui affiche un message et on lui propose de
+  recommencer une partie
+- si le joueur a perdu, on lui affiche un message, puis on demande la solution à
+  PHP, avant de l’afficher en haut du plateau.
+
+- pour la modification d’un pion :
+    - une fois le pion placé, si la ligne est toujours active, le joueur peut
+    cliquer sur un pion placé. Ceci place le jeu en « mode édition » : un voile
+    gris recouvre le plateau, excepté le pion sur lequel on a cliqué (en
+    réalité, on l’aura cloné puis replacé par-dessus l’original). Au-dessus de
+    ce pion se trouve une boîte de sélection contenant les différentes couleurs
+    de pions. Au survol d’un de ces pions, le pion édité prend temporairement
+    cette couleur (il reprend sa couleur initale si on sort la souris de la
+    couleur). Au clic sur une nouvelle couleur, le pion change de couleur
+    définitivement, et on sort du « mode édition » : le voile disparaît, ainsi
+    que le menu. Le pion dans le plateau a bien changé de couleur.
